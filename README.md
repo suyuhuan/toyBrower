@@ -1,7 +1,8 @@
-# toyBrower是一个讲浏览器核心原理的适合手写的小型浏览器
+# toyBrower浏览器实战
+toyBrower是学习浏览器核心原理的手写mini浏览器
 >文章首发于公众号《高级前端术道》，项目已经放到github：https://github.com/suyuhuan/toyBrower
->觉得可以的话，给个star鼓励下哈啊哈
->有什么不对的或者建议或者疑惑，欢迎加wx：yuhuan_su
+>觉得可以的话，给个star鼓励下呗！
+>有什么不对的或者建议或者疑惑，加wx:yuhuan_su一起探讨鸭！
 
 
 # 浏览器原理基础
@@ -15,35 +16,47 @@ url--(http)->html--(parse)->dom--(css computing)->dom with css --(layout)-->dom 
 
 于是我们就从这几个方面一步一步的搭建出自己的浏览器。
 
-# 项目分析与准备
-从基本原理入手，我们可以将我们的浏览器分解为6大块模块来进行部署开发，分别为：server、client、parse、css-computing、layout、render。
+# 项目架构分析
+从基本原理入手，我们可以将我们的浏览器分解为6大块模块来进行部署开发，分别为：server、client、parser、css-computing、layout、render。
 
-server：负责接受url发送数据的服务器端
+```
+server模块：负责接受url发送数据的服务器端
 
-client：负责发起url请求的浏览器端
+client模块：负责发起url请求的浏览器端
 
-parse：负责解析词法
+parser模块：负责解析词法
 
-css-computing：负责css解析
+css-computing模块：负责css解析
 
-layout：负责构建布局
+layout模块：负责构建布局
 
-render：负责显示渲染
+render模块：负责显示渲染
+```
 
-# 初始化项目
+# 项目初始化
 通过分析，我们把浏览器分解出了6大模块，通过6大模块来初始化我们的项目，如下所示：
 
-第1步：新建toyBrower文件夹，在文件夹中npm init 一个项目
+第1步：新建toyBrower文件夹，在文件夹中npm init 初始化一个项目
+```
+npm init
+```
 
-第2步：在项目目录中分别新建server.js、client.js、parse.js、layout.js、render.js空文件
+第2步：在项目目录中分别新建如下文件：
+```
+server.js
+client.js
+parse.js
+layout.js
+render.js
+```
 
-这样子项目初始化基本完成。目录结构如下：
+这样子初始化项目完成。目录结构如下：
 
 ![alt 文件目录](./images/2.png)
 
 项目已经初始化好了，我们就开始写自己的浏览器吧！
 
-# 浏览器与服务器建立链接
+# 建立浏览器与服务连接
 开始自己动手写代码前，我已经默认你电脑具备了node.js的开发环境，没有的赶快装上，准备上车！
 
 ### 1.创建服务
@@ -99,13 +112,15 @@ client.on('end', ()=> {
 })
 ```
 在server.js开启的情况下，运行client.js，控制台分别打印出请求-响应的信息，如下所示：
+
 ![alt 服务端](./images/4.png)
+
 ![alt 客户端](./images/5.png)
 
 假如server和client中分别打印出了如上信息，说明服务器和浏览器端能进行通信了。这是做浏览器的第一步，同时也是最重要的一步。
 
-### 3.发起请求获取服务端数据
-首先我们在服务端server.js中，添加一些有用的字符串，用于发给浏览器作响应。
+### 3.浏览器获取服务端数据
+在发起请求之前，我们在服务端server.js中，多添加一些有用的字符串，用于响应给浏览器，如下所示：
 
 ```js
 //server.js
@@ -131,7 +146,9 @@ const server = http.createServer((req,res)=> {
 server.listen(8080);
 ```
 
-在客户端client.js中把浏览器发起的请求作一个封装。包括设置对请求头和请求体的默认值。
+### 创建Request类，封装浏览器向服务器发送的请求
+
+在客户端client.js中把浏览器发起的请求作一个封装。包括设置请求头、请求体的默认值。
 ``` js
 // client.js
 const net = require("net");
@@ -213,22 +230,22 @@ void async function() {
      console.log(response);
 }();
 ```
-这时重新运行client.js，打印出response的信息如下：
+重新运行client.js，打印出response的信息如下：
 
 ![alt 客户端](./images/6.png)
 
-浏览器得到服务器响应回来的数据以后，就需要对数据进行处理，首先进行的第一步就是进行数据分包。
+浏览器得到服务器响应的数据以后，就要对数据进行处理。浏览器进行的第一步就是数据分包。
 
-# 浏览器的数据分包
+# 浏览器进行数据拆包
 浏览器会从服务器响应中拿到，状态行，响应头，响应体等数据。请求回来的数据后进行分包处理，然后进行词法分析。
 
 所以我们就针对请求回来的数据，作如下几个部分的拆封，分别为：
 statusCode、statusText、headers、body。
 
-### 分包的预期
-拆分预期如下：
+### 1.设计拆包预期
+拆包预期如下：
 
-``` json
+``` js
 {
   statusCode: '200',
   statusText: 'OK',
@@ -255,8 +272,7 @@ statusCode、statusText、headers、body。
 }
 ```
 
-### 设计词法分析状态
-
+### 2.分析分词状态
 要完成如上预期，首先我们需要对请求回来的数据进行词法分析，并且我们需要分别对数据设计几种状态，分别如下：
 ```js
     //状态行
@@ -286,7 +302,7 @@ statusCode、statusText、headers、body。
 
 于是对每个状态收集过来的词，我们进行分包、打包处理。
 
-### 分包处理
+### 3.进行分词分包处理
 在client.js中，创建一个responseParser类，用来进行分包处理。如下：
 ```js
 // client.js
@@ -319,6 +335,7 @@ class Request{
             }
 
             connection.on('data',(data) => {
+
                 // 把服务器响应回来的数据喂给分词工具
                 parser.receive(data.toString());//新添加代码
 
@@ -334,10 +351,10 @@ class Request{
     }
 
 }
-//分词数据包
+//词法分析数据包
 class ResponseParser{
     constructor() {
-        //拆包状态
+        //设置状态
         this.WAITING_STATUS_LINE = 0;
         this.WAITING_STATUS_LINE_END = 1;
 
@@ -385,7 +402,7 @@ class ResponseParser{
         }
 
         else if (this.current === this.WAITING_HEADER_NAME) {
-            
+
           if (char === ':') {
               this.current = this.WAITING_HEADER_SPACE;
           } else if (char === "\r") {
@@ -493,6 +510,245 @@ class TrunkedBodyParser{
 
 void async function() {
     let request = new Request({
+       ....
+     })
+
+     let response = await request.send();
+     console.log(response);
+}();
+```
+
+做到这一步，浏览器数据拆包的词法分析的工作基本完成。怎么确定拆出来的数据是正确的，这个时候我们需要把这些拆分出来的数据进行收集，返回出来。
+
+### 4.收集分包数据返回
+最终分包处理后的完整代码如下：
+```js
+//client.js
+const net = require("net");
+
+class Request{
+
+    constructor(options) {
+        this.method = options.method || "GET";
+        this.host = options.host;
+        this.port = options.port || 80;
+        this.path = options.path || "/";
+        this.body = options.body || {};
+        this.headers = options.headers || {};
+
+        if (!this.headers["Content-Type"]) {
+            this.headers["Content-Type"] = "application/x-www-form-urlencoded";
+        }
+
+        if (this.headers["Content-Type"] === "application/json") {
+            this.bodyText  = JSON.stringify(this.body);
+        } else if (this.headers["Content-Type"].includes('application/x-www-form-urlencoded')) {
+            this.bodyText = Object.keys(this.body).map(key => `${key} = ${encodeURIComponent(this.body[key])}`).join('&');
+        }
+
+        this.headers["Content-Length"] = this.bodyText.length;
+    }
+
+    toString() {
+        return `${this.method} ${this.path} HTTP/1.1\r
+${Object.keys(this.headers).map(key => `${key} : ${this.headers[key]}`).join('\r\n')}\r
+\r
+${this.bodyText}`;
+   }
+
+    send(connection) {
+        return new Promise((resolve,reject) => {
+            const parser = new ResponseParser();
+            if (connection) {
+                connection.write(this.toString());
+            } else {
+                connection = net.createConnection({
+                    host: this.host,
+                    port: this.port
+                }, ()=> {
+                    connection.write(this.toString());
+                })
+            }
+
+            connection.on('data',(data) => {
+                parser.receive(data.toString());
+                
+                if (parser.isFinished) {
+                    resolve(parser.response);
+                  }
+                connection.end();
+            });
+
+            connection.on('error', (err)=> {
+                reject(err);
+                connection.end();
+            })
+        })
+    }
+
+}
+//
+class ResponseParser{
+    constructor() {
+        this.WAITING_STATUS_LINE = 0;
+        this.WAITING_STATUS_LINE_END = 1;
+
+        this.WAITING_HEADER_NAME = 2;
+        this.WAITING_HEADER_SPACE = 3;
+
+        this.WAITING_HEADER_VALUE = 4;
+
+        this.WAITING_HEADER_LINE_END = 5;
+        this.WAITING_HEADER_BLOCK_END = 6;
+
+        this.WAITING_BODY = 7;
+
+        this.current = this.WAITING_STATUS_LINE;
+        this.statusLine = '';
+        this.headers = {};
+        this.headerName = '';
+        this.headerValue = '';
+        this.bodyParser = '';
+    }
+    get isFinished() {
+        return this.bodyParser && this.bodyParser.isFinished;
+    }
+
+    //返回拆分后的数据包
+    get response() {
+        this.statusLine.match(/HTTP\/1.1 ([0-9]+) ([\s\S]+)/);
+        return {
+            statusCode: RegExp.$1,
+            statusText: RegExp.$2,
+            headers: this.headers,
+            body: this.bodyParser.content.join('')
+        }
+    }
+    receive(string) {
+        for (let i = 0; i < string.length; i++) {
+            this.receiveChar(string.charAt(i));
+        }
+    }
+    receiveChar(char) {
+        if (this.current === this.WAITING_STATUS_LINE) {
+            if (char === '\r') {
+              this.current = this.WAITING_STATUS_LINE_END;
+            }else if (char === '\n') {
+                this.current = this.WAITING_HEADER_NAME;
+            } else {
+              this.statusLine += (char);
+            }
+        }
+        else if (this.current === this.WAITING_STATUS_LINE_END){
+            if (char === '\n') {
+                this.current = this.WAITING_HEADER_NAME;
+            }
+        }
+
+        else if (this.current === this.WAITING_HEADER_NAME) {
+          if (char === ':') {
+              this.current = this.WAITING_HEADER_SPACE;
+          } else if (char === "\r") {
+              this.current = this.WAITING_HEADER_BLOCK_END;
+              if (this.headers['Transfer-Encoding'] === 'chunked') {
+                  this.bodyParser = new TrunkedBodyParser();
+              }
+          } else {
+              this.headerName += (char);
+          }
+        }
+
+        else if (this.current === this.WAITING_HEADER_SPACE) {
+            if (char === ' ') {
+                this.current = this.WAITING_HEADER_VALUE;
+            }
+        }
+
+        else if (this.current === this.WAITING_HEADER_VALUE) {
+            if (char === '\r') {
+                this.current = this.WAITING_HEADER_LINE_END;
+                this.headers[this.headerName] = this.headerValue;
+                this.headerName = "";
+                this.headerValue = "";
+            } else {
+                this.headerValue += (char);
+            }
+        }
+        
+        else if (this.current === this.WAITING_HEADER_LINE_END) {
+            if (char === '\n') {
+                this.current = this.WAITING_HEADER_NAME;
+            }
+        }
+        else if (this.current === this.WAITING_HEADER_BLOCK_END) {
+            if (char === '\n') {
+                this.current = this.WAITING_BODY;
+            }
+        }
+
+        else if (this.current === this.WAITING_BODY) {
+            this.bodyParser.receiveChar(char)
+        }
+
+    }
+}
+
+class TrunkedBodyParser{
+    constructor() {
+        this.WAITING_LENGTH = 0;
+        this.WAITING_LENGTH_LINE_END =1;
+        this.READING_TRUNK = 2;
+        this.WAITING_NEW_LINE = 3;
+        this.WAITING_NEW_LINE_END = 4;
+
+        this.length = 0;
+        this.content = [];
+
+        //缓存
+        this.isFinished = false;
+
+        this.current = this.WAITING_LENGTH;
+
+    }
+    receiveChar(char) {
+        if (this.current === this.WAITING_LENGTH) {
+            if (char === '\r') {
+                if (this.length === 0) {
+                    this.isFinished = true;
+                }
+                this.current = this.WAITING_LENGTH_LINE_END;
+            } else {
+                this.length *= 16;
+                this.length += parseInt(char, 16);
+            }
+        }
+        else if (this.current === this.WAITING_LENGTH_LINE_END) {
+            if (char === '\n') {
+                this.current = this.READING_TRUNK;
+            }
+        }
+        else if (this.current === this.READING_TRUNK) {
+            this.content.push(char);
+            this.length --;
+            if (this.length === 0) {
+                this.current = this.WAITING_NEW_LINE;
+            }
+        }
+        else if (this.current === this.WAITING_NEW_LINE) {
+            if (char === '\r') {
+                this.current = this.WAITING_NEW_LINE_END;
+            }
+        }
+        else if (this.current === this.WAITING_NEW_LINE_END) {
+            if (char === '\n') {
+                this.current = this.WAITING_LENGTH;
+            }
+        }
+    }
+}
+
+void async function() {
+    let request = new Request({
         method: "POST",
         host: "127.0.0.1",
         port: "8080",
@@ -511,4 +767,52 @@ void async function() {
 }();
 ```
 
-做到这一步，浏览器数据拆包的词法分析的工作基本完成。怎么确定拆出来的数据是正确的，这个时候我们需要把这些拆分出来的数据进行收集，返回出来。
+重新运行node client.js，控制台打印如下结果：
+
+![alt 拆包预期](./images/7.png)
+
+完全符合预期。
+
+# 浏览器进行HTML解析
+浏览器会对已经拆包出来的body体进行HTML解析，于是我们需要在parser.js中，接收分包好的body体，进行编写解析html的代码。
+
+在client.js中接收分包出来的body体，进行解析,添加如下代码所示：
+
+``` js
+// client.js
+const net = require("net");
+const parser = require("./parser.js")
+
+ .....
+    //代码省略
+ .....
+
+void async function() {
+    let request = new Request({
+       .....
+     })
+      //分包数据
+     let response = await request.send();
+     //进行html解析
+     let dom = parser.parseHTML(response.body);
+}();
+
+```
+在parser.js中接收body，并运行node client.js 打印如下所示：
+
+``` js
+//parser.js
+module.exports.parseHTML = function parseHTML(html) {
+    console.log(html);
+}
+```
+
+node client.js的打印结果:
+
+![alt 拆包预期](./images/8.png)
+
+### 1.创建状态机
+
+
+
+

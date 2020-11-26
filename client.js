@@ -1,4 +1,5 @@
 const net = require("net");
+const parser = require("./parser.js")
 
 class Request{
 
@@ -50,7 +51,6 @@ ${this.bodyText}`;
                 if (parser.isFinished) {
                     resolve(parser.response);
                   }
-                // console.log(parser.header);
                 connection.end();
             });
 
@@ -222,9 +222,6 @@ class TrunkedBodyParser{
     }
 }
 
-class Response {
-
-}
 void async function() {
     let request = new Request({
         method: "POST",
@@ -241,5 +238,7 @@ void async function() {
      })
 
      let response = await request.send();
-     console.log(response);
+    //  console.log(response);
+     //进行html解析
+     let dom = parser.parseHTML(response.body);
 }();
