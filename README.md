@@ -1,6 +1,6 @@
 # toyBrower浏览器实战
 toyBrower是学习浏览器核心原理的手写mini浏览器
->文章首发于公众号《高级前端术道》，项目已经放到github：https://github.com/suyuhuan/toyBrower
+>文章首发于公众号《玉丸子》，项目已经放到github：https://github.com/suyuhuan/toyBrower
 >觉得可以的话，给个star鼓励下呗！
 >有什么不对的或者建议或者疑惑，加wx:yuhuan_su一起探讨鸭！
 
